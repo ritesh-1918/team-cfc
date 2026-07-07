@@ -11,6 +11,18 @@ import {
 
 type SubmitState = "idle" | "submitting" | "success" | "error";
 
+// Browser Speech Recognition — type locally to avoid build-env DOM lib gaps
+interface SpeechRecognitionInstance {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  onresult: ((event: { results: { length: number; [i: number]: { [i: number]: { transcript: string } } } }) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+}
+
 type ExtractionResult = {
   category: string;
   summary: string;
@@ -50,7 +62,7 @@ export default function SubmissionPage() {
   const [result, setResult] = useState<ExtractionResult | null>(null);
   const [error, setError] = useState("");
   const [isRecording, setIsRecording] = useState(false);
-  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
+  const [recognition, setRecognition] = useState<SpeechRecognitionInstance | null>(null);
   const [totalSubmissions, setTotalSubmissions] = useState<number | null>(null);
 
   useEffect(() => {
@@ -87,10 +99,11 @@ export default function SubmissionPage() {
       setIsRecording(false);
       return;
     }
-    const SpeechRecognitionAPI =
-      (typeof window !== "undefined" &&
-        (window.SpeechRecognition ||
-          (window as unknown as { webkitSpeechRecognition: typeof SpeechRecognition }).webkitSpeechRecognition)) ||
+    type SpeechRecognitionCtor = new () => SpeechRecognitionInstance;
+    const w = typeof window !== "undefined" ? (window as unknown as Record<string, unknown>) : null;
+    const SpeechRecognitionAPI: SpeechRecognitionCtor | null =
+      (w?.SpeechRecognition as SpeechRecognitionCtor) ||
+      (w?.webkitSpeechRecognition as SpeechRecognitionCtor) ||
       null;
     if (!SpeechRecognitionAPI) {
       setError("Voice input requires Chrome.");
@@ -100,7 +113,7 @@ export default function SubmissionPage() {
     rec.lang = "en-GB";
     rec.continuous = true;
     rec.interimResults = true;
-    rec.onresult = (event: SpeechRecognitionEvent) => {
+    rec.onresult = (event) => {
       let transcript = "";
       for (let i = 0; i < event.results.length; i++) transcript += event.results[i][0].transcript;
       setText(transcript);
