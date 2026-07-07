@@ -38,7 +38,7 @@ export default function SubmissionPage() {
   const [result, setResult] = useState<ExtractionResult | null>(null);
   const [error, setError] = useState("");
   const [isRecording, setIsRecording] = useState(false);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
 
   async function handleSubmit() {
     if (!text.trim()) return;
@@ -60,30 +60,48 @@ export default function SubmissionPage() {
     }
   }
 
-  async function toggleRecording() {
+  function toggleRecording() {
     if (isRecording) {
-      mediaRecorder?.stop();
+      recognition?.stop();
       setIsRecording(false);
       return;
     }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      const chunks: BlobPart[] = [];
-      recorder.ondataavailable = (e) => chunks.push(e.data);
-      recorder.onstop = () => {
-        stream.getTracks().forEach((t) => t.stop());
-        // For demo: just set a placeholder text
-        setText((prev) =>
-          prev ? prev : "Voice recorded: Road damage near my home needs urgent attention."
-        );
-      };
-      recorder.start();
-      setMediaRecorder(recorder);
-      setIsRecording(true);
-    } catch {
-      setError("Microphone access denied");
+
+    const SpeechRecognitionAPI =
+      (typeof window !== "undefined" &&
+        (window.SpeechRecognition || (window as unknown as { webkitSpeechRecognition: typeof SpeechRecognition }).webkitSpeechRecognition)) ||
+      null;
+
+    if (!SpeechRecognitionAPI) {
+      setError("Voice input not supported in this browser. Use Chrome.");
+      return;
     }
+
+    const rec = new SpeechRecognitionAPI();
+    rec.lang = "en-GB";
+    rec.continuous = true;
+    rec.interimResults = true;
+
+    rec.onresult = (event: SpeechRecognitionEvent) => {
+      let transcript = "";
+      for (let i = 0; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      setText(transcript);
+    };
+
+    rec.onerror = () => {
+      setError("Microphone error. Check permissions.");
+      setIsRecording(false);
+    };
+
+    rec.onend = () => {
+      setIsRecording(false);
+    };
+
+    rec.start();
+    setRecognition(rec);
+    setIsRecording(true);
   }
 
   function reset() {

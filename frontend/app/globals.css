@@ -128,3 +128,21 @@
     @apply font-sans;
   }
 }
+
+/* Leaflet dark map tiles */
+.leaflet-container {
+  background: #18181b;
+}
+.map-tiles-dark {
+  filter: brightness(0.7) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+}
+.leaflet-tooltip {
+  background: #27272a;
+  border: 1px solid #3f3f46;
+  color: #e4e4e7;
+  border-radius: 6px;
+  font-size: 12px;
+  padding: 6px 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+.leaflet-tooltip::before { display: none; }

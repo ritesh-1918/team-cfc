@@ -1,12 +1,22 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
   Zap, ArrowLeft, RefreshCw, Sparkles, TrendingUp,
   MapPin, Users, AlertTriangle, CheckCircle, Clock,
   ChevronRight
 } from "lucide-react";
+
+const HotspotMap = dynamic(() => import("./HotspotMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[340px] rounded-xl bg-zinc-800/50 flex items-center justify-center">
+      <span className="text-xs text-zinc-500">Loading map…</span>
+    </div>
+  ),
+});
 
 type Submission = {
   id: string; raw_text: string; category: string; ward: string;
@@ -119,6 +129,25 @@ export default function DashboardClient() {
           <StatCard label="Wards Affected" value={insights?.wardHotspots.length ?? 0} icon={<MapPin className="w-4 h-4" />} color="emerald" />
           <StatCard label="Recommendations" value={recommendations.length} icon={<CheckCircle className="w-4 h-4" />} color="purple" />
         </div>
+
+        {/* Demand hotspot map */}
+        {insights && insights.wardHotspots.length > 0 && (
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 mb-6">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-indigo-400" />
+                  Demand Hotspot Map
+                </h2>
+                <p className="text-xs text-zinc-500 mt-0.5">
+                  Circle size = issue volume · Colour: red = critical, amber = moderate, indigo = low
+                </p>
+              </div>
+              <span className="text-xs text-zinc-500">{insights.wardHotspots.length} wards active</span>
+            </div>
+            <HotspotMap hotspots={insights.wardHotspots} />
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left column */}
@@ -317,7 +346,7 @@ function SubmissionRow({ submission }: { submission: Submission }) {
   );
 }
 
-function RecommendationCard({ rec, rank }: { recommendation?: unknown; rec: Recommendation; rank: number }) {
+function RecommendationCard({ rec, rank }: { rec: Recommendation; rank: number }) {
   const color = CATEGORY_COLORS[rec.category] || "#6366f1";
   const score = Math.min(100, Math.round(rec.priority_score));
   return (

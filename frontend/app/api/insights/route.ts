@@ -43,17 +43,19 @@ export async function GET() {
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value);
 
-  // Ward hotspots
-  const wardMap: Record<string, { count: number; lat: number; lng: number }> = {};
+  // Ward hotspots — average coordinates per ward
+  const wardMap: Record<string, { count: number; latSum: number; lngSum: number }> = {};
   for (const s of submissions) {
-    if (!wardMap[s.ward]) wardMap[s.ward] = { count: 0, lat: s.lat, lng: s.lng };
+    if (!wardMap[s.ward]) wardMap[s.ward] = { count: 0, latSum: 0, lngSum: 0 };
     wardMap[s.ward].count++;
+    wardMap[s.ward].latSum += s.lat ?? 0;
+    wardMap[s.ward].lngSum += s.lng ?? 0;
   }
   const wardHotspots = Object.entries(wardMap).map(([ward, v]) => ({
     ward,
     count: v.count,
-    lat: v.lat,
-    lng: v.lng,
+    lat: v.latSum / v.count,
+    lng: v.lngSum / v.count,
   }));
 
   return NextResponse.json({

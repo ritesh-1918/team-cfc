@@ -62,11 +62,20 @@ Generate exactly ${topClusters.length} project recommendations. Return ONLY vali
 Rank by priority. Be specific and actionable.`;
 
   const response = await chatCompletion([{ role: "user", content: prompt }], true);
-  let parsed = JSON.parse(response);
+
+  let parsed: unknown;
+  try {
+    // Strip markdown code fences if LLM wraps response
+    const clean = response.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
+    parsed = JSON.parse(clean);
+  } catch {
+    return NextResponse.json({ error: "LLM returned invalid JSON" }, { status: 500 });
+  }
 
   // Normalise: LLM may wrap in { recommendations: [...] } or { projects: [...] }
   if (!Array.isArray(parsed)) {
-    parsed = parsed.recommendations || parsed.projects || parsed.items || Object.values(parsed)[0] || [];
+    const obj = parsed as Record<string, unknown>;
+    parsed = obj.recommendations || obj.projects || obj.items || Object.values(obj)[0] || [];
   }
 
   // Map to only valid DB columns
@@ -77,8 +86,8 @@ Rank by priority. Be specific and actionable.`;
     return clean;
   });
 
-  // Clear old and insert new
-  await db.from("recommendations").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+  // Delete only existing rows, then insert fresh
+  await db.from("recommendations").delete().gt("priority_score", -1);
 
   const { data: inserted, error } = await db
     .from("recommendations")
