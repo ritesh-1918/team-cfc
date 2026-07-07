@@ -1,5 +1,5 @@
-import SubmissionPage from "@/components/SubmissionPage";
+import LandingPage from "@/components/LandingPage";
 
 export default function Home() {
-  return <SubmissionPage />;
+  return <LandingPage />;
 }
