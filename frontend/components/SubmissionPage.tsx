@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Mic, MicOff, Send, CheckCircle2, Loader2,
-  MapPin, LayoutDashboard, Zap
+  MapPin, LayoutDashboard, Zap, Activity
 } from "lucide-react";
 
 type SubmitState = "idle" | "recording" | "submitting" | "success" | "error";
@@ -39,6 +39,14 @@ export default function SubmissionPage() {
   const [error, setError] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
+  const [totalSubmissions, setTotalSubmissions] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch("/api/insights")
+      .then((r) => r.json())
+      .then((d) => setTotalSubmissions(d.total ?? null))
+      .catch(() => {});
+  }, []);
 
   async function handleSubmit() {
     if (!text.trim()) return;
@@ -54,6 +62,7 @@ export default function SubmissionPage() {
       if (!res.ok) throw new Error(data.error);
       setResult(data.extracted);
       setState("success");
+      setTotalSubmissions((n) => (n !== null ? n + 1 : null));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Submission failed");
       setState("error");
@@ -120,13 +129,21 @@ export default function SubmissionPage() {
             <Zap className="w-5 h-5 text-indigo-400" />
             <span className="font-semibold text-zinc-100">CivicPulse</span>
           </div>
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-2 text-sm text-zinc-400 hover:text-zinc-100 transition-colors px-3 py-1.5 rounded-lg hover:bg-zinc-800"
-          >
-            <LayoutDashboard className="w-4 h-4" />
-            MP Dashboard
-          </Link>
+          <div className="flex items-center gap-3">
+            {totalSubmissions !== null && (
+              <span className="flex items-center gap-1.5 text-xs text-zinc-500">
+                <Activity className="w-3 h-3 text-emerald-500 animate-pulse" />
+                {totalSubmissions} voices heard
+              </span>
+            )}
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-2 text-sm text-zinc-400 hover:text-zinc-100 transition-colors px-3 py-1.5 rounded-lg hover:bg-zinc-800"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              MP Dashboard
+            </Link>
+          </div>
         </div>
       </nav>
 

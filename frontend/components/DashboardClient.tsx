@@ -365,11 +365,19 @@ function RecommendationCard({ rec, rank }: { rec: Recommendation; rank: number }
       </div>
       <p className="text-sm font-medium text-zinc-200 mb-1">{rec.title}</p>
       <p className="text-xs text-zinc-500 mb-2 line-clamp-2">{rec.description}</p>
-      <div className="flex items-center gap-2 text-xs text-zinc-500">
+      <div className="flex items-center gap-2 text-xs text-zinc-500 flex-wrap">
         <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{rec.ward}</span>
         <span>·</span>
         <span className="flex items-center gap-1"><Users className="w-3 h-3" />{rec.submission_count} reports</span>
       </div>
+      {rec.estimated_impact && (
+        <div className="mt-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-2.5 py-1.5">
+          <p className="text-xs text-emerald-400 flex items-center gap-1">
+            <CheckCircle className="w-3 h-3 shrink-0" />
+            {rec.estimated_impact}
+          </p>
+        </div>
+      )}
       {rec.rationale && (
         <p className="text-xs text-indigo-400 mt-2 border-t border-zinc-800 pt-2 flex items-start gap-1">
           <ChevronRight className="w-3 h-3 shrink-0 mt-0.5" />
