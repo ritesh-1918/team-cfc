@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import {
   Zap, ArrowLeft, RefreshCw, Sparkles, TrendingUp,
   MapPin, Users, AlertTriangle, CheckCircle, Clock,
@@ -58,11 +58,11 @@ const URGENCY_STYLES: Record<string, string> = {
   low:      "bg-emerald-400/15 text-emerald-400 border-emerald-400/25",
 };
 
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } },
 };
-const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.07 } } };
+const stagger: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.07 } } };
 
 export default function DashboardClient() {
   const [insights, setInsights] = useState<Insight | null>(null);
